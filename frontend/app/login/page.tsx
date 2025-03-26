@@ -14,34 +14,49 @@ interface LoginFormData {
   password: string;
 }
 
-export const Login = () => {
+ const Login = () => {
     const router = useRouter();
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
 
 
+
     const onSubmit = async (data: LoginFormData) => {
+        setIsLoading(true);
         try {
-        const response = await axios.post(`${process.env.API_URI}/api/login/`, data);
-        localStorage.setItem('auth_token', response.data.token);
-        router.push('/tasks');
+        
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URI}/api/token/`, data);
+        
+        if(response.data?.access && response.data?.refresh ){
+            setIsLoading(false)
+            console.log(response.data?.access);
+            localStorage.setItem('auth_token', response.data?.access);
+            router.push('/tasks');
+        }
+        
         } catch (error) {
+            setIsLoading(false)
+            console.log(error)
         setError('Invalid credentials');
+        }
+        finally{
+            setIsLoading(false)
         }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="max-w-md w-full space-y-8 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-foreground py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="max-w-md w-full space-y-8 p-8 shadow-2xl bg-white  border-secondary-foreground">
         <div className="text-center">
           <div className="flex justify-center">
             <Lock className="h-12 w-12 text-primary" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Sign in to your account</h2>
+          <h2 className="mt-6 text-3xl font-bold text-primary">Sign in to your account</h2>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        <form className="mt-8 text-background space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
-            <div>
+            <div className='flex flex-col space-y-2'>
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
@@ -53,7 +68,7 @@ export const Login = () => {
                 <p className="mt-1 text-sm text-red-500">{errors.username.message}</p>
               )}
             </div>
-            <div>
+            <div className='flex flex-col space-y-2'>
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -71,8 +86,8 @@ export const Login = () => {
             <p className="text-sm text-red-500 text-center">{error}</p>
           )}
 
-          <Button type="submit" className="w-full">
-            Sign in
+          <Button  type="submit" className="w-full">
+            { !isLoading ?  'Sign in' : 'Signing In..' }
           </Button>
         </form>
       </Card>
@@ -80,3 +95,4 @@ export const Login = () => {
   )
 }
 
+export default Login;

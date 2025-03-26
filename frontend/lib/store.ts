@@ -1,3 +1,4 @@
+import axios from "axios";
 import { create } from "zustand";
 
 const API_URL = process.env.API_URL || 'http://localhost:3000/api';
@@ -27,7 +28,7 @@ interface TaskStore {
   isLoading: boolean;
   error: string | null;
   fetchTasks: () => Promise<void>;
-  createTasks: (task: Omit<Task, 'id' | 'created_at'>) => Promise<void>;
+  createTask: (tasks: Task[]) => Promise<void>;
   updateTask: (id: number, task: Partial<Task>) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
 }
@@ -80,16 +81,49 @@ console.log(tasks);
 
 
 export const useTaskStore = create<TaskStore>((set) => ({
-  tasks: tasks,
+  tasks: [],
   isLoading: false,
   error: null,
+
+  createTask: async (tasks: Task[]) => {
+  set({ isLoading: true });
+  try {
+    const token = localStorage.getItem("token");
+        const auth_token = localStorage.getItem('auth_token');
+        if(!auth_token){
+            set({error:'Authentication Token Missing'});
+            return;
+        }
+
+    const response = await axios.post(`${API_URL}/tasks/`, tasks, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    set((state) => ({
+      tasks: [...state.tasks, ...response.data],
+      error: null,
+    }));
+  } catch (error) {
+    console.error("Error creating tasks:", error);
+    set({ error: error?.data?.message || "Failed to create tasks" });
+  } finally {
+    set({ isLoading: false });
+  }
+},
+
+
 
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
+        const auth_token = localStorage.getItem('auth_token');
+        if(!auth_token){
+            set({error:'Authentication Token Missing'});
+            return;
+        }
       const response = await axios.get(`${API_URL}/tasks/`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${auth_token}`,
         },
       });
       set({ tasks: response.data, error: null });

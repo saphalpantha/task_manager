@@ -1,17 +1,38 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from './button';
 import { ClipboardList, LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react'
+;
+import { isTokenExpired } from '@/lib/utils';
 
 export function Navbar() {
   const router = useRouter();
+
+  const [isAuth, setIsAuth] = useState<boolean>(false);
+
+
+ useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+
+    if (token) {
+      setIsAuth(true);
+    } else {
+      setIsAuth(false);
+    }
+    
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
     router.push('/login');
   };
+
+
+
+
 
   return (
     <nav className="border-b">
@@ -25,17 +46,35 @@ export function Navbar() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Link href="/tasks">
+            {
+                isAuth ??
+                <Link href="/tasks">
               <Button variant="ghost">Tasks</Button>
             </Link>
-            <Button 
-              variant="outline" 
-              className="flex items-center space-x-2"
+            }
+            {
+                isAuth ? 
+                
+                
+                <Button 
+                variant="outline" 
+                className="flex items-center space-x-2"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />
               <span>Logout</span>
+            </Button>  : 
+                            <Link href={"/login"}>
+                            <Button 
+                variant="outline" 
+                className="flex items-center space-x-2"
+                
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Login</span>
             </Button>
+                </Link>
+            }
           </div>
         </div>
       </div>

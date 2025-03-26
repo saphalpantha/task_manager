@@ -50,25 +50,25 @@ export default function TaskList() {
 
       <div className="grid gap-4">
         {tasks?.map((task) => (
-          <Card key={task.id} className="p-4">
-            <div className="flex items-center justify-between">
+          <Card key={task.id} className="p-4 border-b-accent-foreground shadow-accent">
+            <div className="flex items-center  justify-between">
               <div className="flex items-center space-x-4">
-                <div>
+                <div className='flex flex-col gap-2'>
                   <h3 className={`text-lg font-semibold ${task.status.COMPLETED ? 'line-through text-gray-500' : ''}`}>
                     {task.title}
                   </h3>
-                  <p className="text-gray-600">{task.description}</p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-muted-foreground">{task.description}</p>
+                  <p className="text-[0.9rem] text-gray-400">
                     Created: {new Date(task.created_at).toLocaleDateString()}
                   </p>
                   <Select>
-  <SelectTrigger className="w-[180px]">
-    <SelectValue placeholder="Theme" />
+  <SelectTrigger className="w-[180px] py-2">
+    <SelectValue placeholder="Status" />
   </SelectTrigger>
   <SelectContent>
-    <SelectItem value="light">Light</SelectItem>
-    <SelectItem value="dark">Dark</SelectItem>
-    <SelectItem value="system">System</SelectItem>
+    <SelectItem value="PENDING">Pending</SelectItem>
+    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+    <SelectItem value="COMPLETED">Completed</SelectItem>
   </SelectContent>
 </Select>
                 </div>
