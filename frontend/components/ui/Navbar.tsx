@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from './button';
 import { ClipboardList, LogOut } from 'lucide-react';
-import { useEffect, useState } from 'react'
-;
-import { isTokenExpired } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { isTokenValid } from '@/lib/utils';
 
 export function Navbar() {
   const router = useRouter();
@@ -17,7 +16,7 @@ export function Navbar() {
  useEffect(() => {
     const token = localStorage.getItem('auth_token');
 
-    if (token) {
+    if (token && isTokenValid(token)) {
       setIsAuth(true);
     } else {
       setIsAuth(false);
@@ -47,7 +46,7 @@ export function Navbar() {
           
           <div className="flex items-center space-x-4">
             {
-                isAuth ??
+                isAuth &&
                 <Link href="/tasks">
               <Button variant="ghost">Tasks</Button>
             </Link>

@@ -1,11 +1,12 @@
-import React from 'react'
 
-const page = () => {
+import TaskForm from '@/components/TaskForm';
+
+
+
+export default function NewTask() {
+
+
   return (
-    <div>
-      
-    </div>
-  )
+      <TaskForm  type="create"/>
+  );
 }
-
-export default page

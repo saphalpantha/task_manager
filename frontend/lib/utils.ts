@@ -1,16 +1,24 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import {jwtDecode} from 'jwt-decode'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 
-export const isTokenExpired = (token:any) => {
-  if (!token) return true;
+export const isTokenValid = (token:any) => {
+  if (!token) return false;
   
-  const { exp } = JSON.parse(atob(token.split('.')[1]));
-  if (!exp) return true;
+  try {
+    const decoded = jwtDecode(token);
+    const exp = decoded?.exp;
 
-  return Date.now() >= exp * 1000;
+    if (!exp) return true;
+    
+    return Date.now() < exp * 1000;
+
+  } catch (error) {
+    return false;
+  }
 };

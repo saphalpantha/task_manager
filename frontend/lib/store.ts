@@ -1,4 +1,6 @@
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
 import { create } from "zustand";
 
 const API_URL = process.env.API_URL || 'http://localhost:3000/api';
@@ -7,10 +9,11 @@ const API_URL = process.env.API_URL || 'http://localhost:3000/api';
 
 
 
-enum TaskStatus{
-    PENDING =  "PENDING",
-    ON_PROGRESS =  "ON_PROGRESS",
-    COMPLETED = "COMPLETED",
+
+export enum TaskStatus{
+    PENDING =  "P",
+    ON_PROGRESS =  "I",
+    COMPLETED = "C",
 }
 
 interface Task {
@@ -22,14 +25,21 @@ interface Task {
   updated_at : string;
 }
 
+export interface TaskFormData {
+  title: string;
+  description: string;
+  status? : TaskStatus;
+}
+
 
 interface TaskStore {
   tasks: Task[];
   isLoading: boolean;
   error: string | null;
   fetchTasks: () => Promise<void>;
-  createTask: (tasks: Task[]) => Promise<void>;
-  updateTask: (id: number, task: Partial<Task>) => Promise<void>;
+  fetchTaskSingle:(id:number) => Promise<void>;
+  createTask: (tasks: TaskFormData) => Promise<void>;
+  updateTask: (id: number, task: Partial<TaskFormData>) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
 }
 
@@ -85,31 +95,48 @@ export const useTaskStore = create<TaskStore>((set) => ({
   isLoading: false,
   error: null,
 
-  createTask: async (tasks: Task[]) => {
-  set({ isLoading: true });
-  try {
-    const token = localStorage.getItem("token");
-        const auth_token = localStorage.getItem('auth_token');
-        if(!auth_token){
-            set({error:'Authentication Token Missing'});
-            return;
-        }
+  createTask: async (tasks: TaskFormData ) => {
+    set({ isLoading: true });
+    try {
+      const auth_token = localStorage.getItem('auth_token');
+      // console.log('isnide ');
+      if(!auth_token){
+        set({error:'Authentication Token Missing'});
+        return;
+      }
+      const jwtDecoded = jwtDecode(auth_token);
 
-    const response = await axios.post(`${API_URL}/tasks/`, tasks, {
-      headers: { Authorization: `Bearer ${token}` },
+      if(!jwtDecoded?.user_id){
+        set({error:'Invalid User'});
+        return;
+      }
+      const updatedInput = {
+        ...tasks,
+        user:jwtDecoded?.user_id 
+      }
+
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URI}/api/tasks/`, updatedInput, {
+      headers: { Authorization: `Bearer ${auth_token}` },
     });
+
+
+
+
+    console.log(jwtDecoded, 'works response');
 
     set((state) => ({
       tasks: [...state.tasks, ...response.data],
       error: null,
     }));
   } catch (error) {
+    
     console.error("Error creating tasks:", error);
     set({ error: error?.data?.message || "Failed to create tasks" });
   } finally {
     set({ isLoading: false });
   }
 },
+
 
 
 
@@ -121,7 +148,7 @@ export const useTaskStore = create<TaskStore>((set) => ({
             set({error:'Authentication Token Missing'});
             return;
         }
-      const response = await axios.get(`${API_URL}/tasks/`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URI}/api/tasks/`, {
         headers: {
           Authorization: `Bearer ${auth_token}`,
         },
@@ -134,37 +161,72 @@ export const useTaskStore = create<TaskStore>((set) => ({
     }
   },
 
-  addTask: async (task) => {
+
+   fetchTaskSingle: async (id) => {
     set({ isLoading: true });
     try {
-      const response = await axios.post(`${API_URL}/tasks/`, task, {
+        const auth_token = localStorage.getItem('auth_token');
+        if(!auth_token){
+            set({error:'Authentication Token Missing'});
+            return;
+        }
+        if(!id){
+          set({error:'Id required to Update this task'})
+        }
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URI}/api/tasks/${id}/`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${auth_token}`,
         },
       });
-      set((state) => ({
-        tasks: [...state.tasks, response.data],
-        error: null,
-      }));
+      set({ tasks: response.data, error: null });
     } catch (error) {
-      set({ error: 'Failed to add task' });
+      set({ error: 'Failed to fetch task' });
     } finally {
       set({ isLoading: false });
     }
   },
 
+
+
   updateTask: async (id, task) => {
     set({ isLoading: true });
+    const isTaskCompleted = task.status === "C";
     try {
-      const response = await axios.patch(`${API_URL}/tasks/${id}/`, task, {
+      const auth_token = localStorage.getItem('auth_token');
+      // console.log('isnide ');
+      if(!auth_token){
+        set({error:'Authentication Token Missing'});
+        return;
+      }
+      const jwtDecoded = jwtDecode(auth_token);
+
+      if(!jwtDecoded?.user_id){
+        set({error:'Invalid User'});
+        return;
+      }
+      const updatedInput = {
+        ...task,
+        user:jwtDecoded?.user_id 
+      }
+
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URI}/api/tasks/${id}/`, updatedInput, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${auth_token}`,
         },
       });
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? response.data : t)),
-        error: null,
-      }));
+
+      
+
+      set((state) => {
+      const updatedTasks = state.tasks.map((t) => (t.id === id ? response.data : t));
+      
+      // if (response.data.status === "C") {
+      //   // state.deleteTask(id);
+      //   return { tasks: updatedTasks.filter((t) => t.id !== id), error: null };
+      // }
+
+      return { tasks: updatedTasks, error: null };
+    });
     } catch (error) {
       set({ error: 'Failed to update task' });
     } finally {
@@ -175,16 +237,29 @@ export const useTaskStore = create<TaskStore>((set) => ({
   deleteTask: async (id) => {
     set({ isLoading: true });
     try {
-      await axios.delete(`${API_URL}/tasks/${id}/`, {
+       const auth_token = localStorage.getItem('auth_token');
+      if(!auth_token){
+        set({error:'Authentication Token Missing'});
+        return;
+      }
+      const jwtDecoded = jwtDecode(auth_token);
+
+      if(!jwtDecoded?.user_id){
+        set({error:'Invalid User'});
+        return;
+      }
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URI}/api/tasks/${id}/`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${auth_token}`,
         },
       });
+      toast(`Task ${id} Deleted Successfully !`);
       set((state) => ({
         tasks: state.tasks.filter((t) => t.id !== id),
         error: null,
       }));
     } catch (error) {
+      toast("Failed to Delete");
       set({ error: 'Failed to delete task' });
     } finally {
       set({ isLoading: false });

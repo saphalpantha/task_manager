@@ -1,10 +1,10 @@
+import TaskForm from '@/components/TaskForm'
 import React from 'react'
 
-const page = () => {
+const page = async ({params}:{params: Promise<{slug:string}>}) => {
+  const slug = await params;
   return (
-    <div>
-      
-    </div>
+    <TaskForm id={+slug?.id} type='update'/>
   )
 }
 
