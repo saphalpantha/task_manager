@@ -14,35 +14,35 @@ interface LoginFormData {
   password: string;
 }
 
- const Login = () => {
-    const router = useRouter();
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
+const Login = () => {
+  const router = useRouter();
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
 
 
 
-    const onSubmit = async (data: LoginFormData) => {
-        setIsLoading(true);
-        try {
-        
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URI}/api/token/`, data);
-        
-        if(response.data?.access && response.data?.refresh ){
-            setIsLoading(false)
-            console.log(response.data?.access);
-            localStorage.setItem('auth_token', response.data?.access);
-            router.push('/tasks');
-        }
-        
-        } catch (error) {
-            setIsLoading(false)
-            console.log(error)
-        setError('Invalid credentials');
-        }
-        finally{
-            setIsLoading(false)
-        }
+  const onSubmit = async (data: LoginFormData) => {
+    setIsLoading(true);
+    try {
+
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URI}/api/token/`, data);
+
+      if (response.data?.access && response.data?.refresh) {
+        setIsLoading(false)
+        console.log(response.data?.access);
+        localStorage.setItem('auth_token', response.data?.access);
+        router.push('/tasks');
+      }
+
+    } catch (error) {
+      setIsLoading(false)
+      console.log(error)
+      setError('Invalid credentials');
+    }
+    finally {
+      setIsLoading(false)
+    }
   };
 
   return (
@@ -86,8 +86,8 @@ interface LoginFormData {
             <p className="text-sm text-red-500 text-center">{error}</p>
           )}
 
-          <Button  type="submit" className="w-full">
-            { !isLoading ?  'Sign in' : 'Signing In..' }
+          <Button type="submit" className="w-full">
+            {!isLoading ? 'Sign in' : 'Signing In..'}
           </Button>
         </form>
       </Card>

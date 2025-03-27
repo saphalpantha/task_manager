@@ -5,8 +5,7 @@ import TaskForm from '@/components/TaskForm';
 
 export default function NewTask() {
 
-
   return (
-      <TaskForm  type="create"/>
+    <TaskForm type="create" />
   );
 }

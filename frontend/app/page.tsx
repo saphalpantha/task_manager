@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ClipboardList } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
   return (
-     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
           <div className="flex justify-center mb-8">
